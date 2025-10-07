@@ -1,0 +1,39 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build_test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [16.x, 18.x, 20.x]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js (${{ matrix.node }})
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: "npm-cache-${{ hashFiles('**/package-lock.json') }}"
+          restore-keys: |
+            npm-cache-
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test -- --coverage
+      - name: Build
+        run: npm run build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: dist/
+
